@@ -4,6 +4,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import Link from "next/link";
 
 interface Gist {
   id: string;
@@ -21,7 +22,7 @@ export default function HomePage() {
 
   const [username, setUsername] = useState("");
 
-  // Fetch logged-in user’s gists (public + private)
+  // Fetch logged-in user's gists (public + private)
   useEffect(() => {
     if (session?.accessToken) {
       setLoadingUserGists(true);
@@ -109,14 +110,12 @@ export default function HomePage() {
                   <p className="text-sm text-gray-500 mb-2">
                     Files: {Object.keys(gist.files).join(", ")}
                   </p>
-                  <a
-                    href={gist.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href={`/gist/${gist.id}`}
                     className="text-blue-600 hover:underline"
                   >
-                    View Gist
-                  </a>
+                    View Details →
+                  </Link>
                 </li>
               ))}
             </ul>
