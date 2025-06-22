@@ -1,57 +1,45 @@
 "use client";
-import { useState } from "react";
-import { getPublicGistsByUsername } from "@/lib/github";
 
-export default function Search() {
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+
+export default function SearchPage() {
   const [username, setUsername] = useState("");
-  const [gists, setGists] = useState([]);
+  const [debouncedUsername, setDebouncedUsername] = useState("");
+  const router = useRouter();
 
-  const handleSearch = async () => {
-    console.log("handleSearch triggered with username:", username);
-    if (!username.trim()) return;
-    const data = await getPublicGistsByUsername(username);
-    setGists(data);
-  };
+  // Debounce effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedUsername(username);
+    }, 400); // 400ms debounce
+    return () => clearTimeout(timer);
+  }, [username]);
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    console.log("Key pressed:", e.key);
-    if (e.key === "enter") {
-      e.preventDefault(); // prevent form submission or default behavior
-      handleSearch();
+  const handleSearch = () => {
+    if (debouncedUsername.trim()) {
+      router.push(`/search/${debouncedUsername.trim()}`);
     }
   };
 
   return (
-    <div className="p-4">
-      <input
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder="Enter GitHub username"
-        className="p-2 border rounded-md mr-2"
-      />
-      <button
-        onClick={handleSearch}
-        className="bg-blue-500 text-white px-4 py-2 rounded-md"
-      >
-        Search
-      </button>
-
-      <div className="mt-4">
-        {gists.map((gist: any) => (
-          <div key={gist.id} className="p-4 border mb-2 rounded-md">
-            <h2 className="font-bold">{gist.description || "No description"}</h2>
-            <a
-              href={gist.html_url}
-              className="text-blue-600 underline"
-              target="_blank"
-              rel="noreferrer"
-            >
-              View Gist
-            </a>
-          </div>
-        ))}
+    <div className="p-8 max-w-xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-center">🔍 GitHub Gist Search</h1>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Enter GitHub username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          className="flex-grow border p-3 rounded-md shadow-sm"
+        />
+        <button
+          onClick={handleSearch}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+        >
+          Search
+        </button>
       </div>
     </div>
   );

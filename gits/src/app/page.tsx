@@ -2,6 +2,7 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 
 interface Gist {
@@ -13,13 +14,12 @@ interface Gist {
 
 export default function HomePage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
 
   const [userGists, setUserGists] = useState<Gist[]>([]);
-  const [searchUsername, setSearchUsername] = useState("");
-  const [searchGists, setSearchGists] = useState<Gist[]>([]);
   const [loadingUserGists, setLoadingUserGists] = useState(false);
-  const [loadingSearch, setLoadingSearch] = useState(false);
-  const [searchError, setSearchError] = useState("");
+
+  const [username, setUsername] = useState("");
 
   // Fetch logged-in user’s gists (public + private)
   useEffect(() => {
@@ -39,29 +39,15 @@ export default function HomePage() {
     }
   }, [session?.accessToken]);
 
-  // Search public gists by username
-  const handleSearch = async () => {
-    if (!searchUsername.trim()) {
-      setSearchGists([]);
-      setSearchError("Please enter a GitHub username.");
-      return;
+  const handleSearch = () => {
+    if (username.trim()) {
+      router.push(`/search/${username.trim()}`);
     }
-    setLoadingSearch(true);
-    setSearchError("");
-    try {
-      const res = await axios.get(
-        `https://api.github.com/users/${searchUsername}/gists`
-      );
-      setSearchGists(res.data);
-    } catch (error: any) {
-      setSearchError(
-        error.response?.status === 404
-          ? "User not found."
-          : "Failed to fetch gists."
-      );
-      setSearchGists([]);
-    } finally {
-      setLoadingSearch(false);
+  };
+
+  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
     }
   };
 
@@ -70,8 +56,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* Auth Buttons */}
+    <main className="max-w-4xl mx-auto p-6 space-y-10">
+      {/* Auth Section */}
       {!session ? (
         <div className="text-center">
           <button
@@ -84,11 +70,13 @@ export default function HomePage() {
       ) : (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img
-              src={session.avatar_url}
-              alt="Avatar"
-              className="w-12 h-12 rounded-full"
-            />
+            {session.user?.image && (
+              <img
+                src={session.user.image}
+                alt="User Avatar"
+                className="w-12 h-12 rounded-full"
+              />
+            )}
             <div>
               <p className="font-semibold">{session.user?.name}</p>
               <p className="text-sm text-gray-600">{session.user?.email}</p>
@@ -103,7 +91,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* User’s own gists */}
+      {/* User's Own Gists */}
       {session && (
         <section>
           <h2 className="text-xl font-semibold mb-4">Your Gists</h2>
@@ -136,15 +124,16 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Search public gists by GitHub username */}
+      {/* Search Other Users' Gists */}
       <section>
         <h2 className="text-xl font-semibold mb-4">Search Public Gists by Username</h2>
         <div className="flex gap-2 mb-4">
           <input
             type="text"
             placeholder="Enter GitHub username"
-            value={searchUsername}
-            onChange={(e) => setSearchUsername(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={handleEnter}
             className="flex-grow border p-2 rounded-md"
           />
           <button
@@ -154,31 +143,7 @@ export default function HomePage() {
             Search
           </button>
         </div>
-        {loadingSearch && <p>Searching gists...</p>}
-        {searchError && <p className="text-red-600">{searchError}</p>}
-        {searchGists.length > 0 && (
-          <ul className="space-y-3">
-            {searchGists.map((gist) => (
-              <li key={gist.id} className="border p-3 rounded-md">
-                <h3 className="font-semibold mb-1">
-                  {gist.description || "No description"}
-                </h3>
-                <p className="text-sm text-gray-500 mb-2">
-                  Files: {Object.keys(gist.files).join(", ")}
-                </p>
-                <a
-                  href={gist.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  View Gist
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
-    </div>
+    </main>
   );
 }
