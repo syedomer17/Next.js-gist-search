@@ -21,11 +21,9 @@ export default function GistDetail({ params }: { params: { gistid: string } }) {
       .then((data) => {
         setGist(data);
 
-        // Extract the content from the first file
         const firstFileKey = Object.keys(data.files)[0];
         const file = data.files[firstFileKey];
 
-        // If `content` is not available in response, fetch raw URL
         if (file.content) {
           setContent(file.content);
         } else if (file.raw_url) {
@@ -36,15 +34,19 @@ export default function GistDetail({ params }: { params: { gistid: string } }) {
       });
   }, [accessToken, params.gistid]);
 
-  if (!gist) return <p className="p-6">Loading…</p>;
+  if (!gist) return <p className="p-6 text-center text-lg">Loading…</p>;
+
+  const filename = Object.keys(gist.files)[0];
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-xl font-bold">{gist.description || 'No description'}</h1>
+    <div className="p-6 max-w-3xl mx-auto space-y-6 bg-white shadow rounded-lg">
+      <h1 className="text-2xl font-bold">
+        {gist.description || <span className="italic text-gray-500">No description</span>}
+      </h1>
 
-      <h2 className="text-lg font-semibold">File: {Object.keys(gist.files)[0]}</h2>
+      <h2 className="text-lg font-semibold text-gray-700">File: {filename}</h2>
 
-      <pre className="bg-gray-100 p-4 rounded overflow-x-auto whitespace-pre-wrap">
+      <pre className="bg-gray-100 text-sm p-4 rounded-lg overflow-x-auto whitespace-pre-wrap border border-gray-200">
         {content ?? 'Loading file content...'}
       </pre>
 
@@ -60,13 +62,14 @@ export default function GistDetail({ params }: { params: { gistid: string } }) {
               }).then(() => router.push('/my-gists'));
             }
           }}
-          className="bg-red-600 text-white px-4 py-2 rounded"
+          className="bg-red-600 text-white px-5 py-2 rounded hover:bg-red-700 transition-transform transform hover:scale-105 cursor-pointer"
         >
           Delete
         </button>
+
         <button
           onClick={() => router.push(`/gist/${params.gistid}/edit`)}
-          className="bg-yellow-500 text-white px-4 py-2 rounded"
+          className="bg-yellow-500 text-white px-5 py-2 rounded hover:bg-yellow-600 transition-transform transform hover:scale-105 cursor-pointer"
         >
           Edit
         </button>
