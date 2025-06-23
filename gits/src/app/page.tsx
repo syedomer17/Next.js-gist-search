@@ -69,27 +69,53 @@ export default function HomePage() {
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {session.user?.image && (
-              <img
-                src={session.user.image}
-                alt="User Avatar"
-                className="w-12 h-12 rounded-full"
-              />
-            )}
-            <div>
-              <p className="font-semibold">{session.user?.name}</p>
-              <p className="text-sm text-gray-600">{session.user?.email}</p>
+        <>
+          {/* User Info */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {session.user?.image && (
+                <img
+                  src={session.user.image}
+                  alt="User Avatar"
+                  className="w-12 h-12 rounded-full"
+                />
+              )}
+              <div>
+                <p className="font-semibold">{session.user?.name}</p>
+                <p className="text-sm text-gray-600">{session.user?.email}</p>
+              </div>
             </div>
+            <button
+              onClick={() => signOut()}
+              className="text-red-600 hover:underline"
+            >
+              Sign out
+            </button>
           </div>
-          <button
-            onClick={() => signOut()}
-            className="text-red-600 hover:underline"
-          >
-            Sign out
-          </button>
-        </div>
+
+          {/* 🔍 Search Gists by Username - moved here */}
+          <section>
+            <h2 className="text-xl font-semibold mt-8 mb-4">
+              Search Public Gists by Username
+            </h2>
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                placeholder="Enter GitHub username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={handleEnter}
+                className="flex-grow border p-2 rounded-md"
+              />
+              <button
+                onClick={handleSearch}
+                className="bg-blue-600 text-white px-4 rounded-md hover:bg-blue-700"
+              >
+                Search
+              </button>
+            </div>
+          </section>
+        </>
       )}
 
       {/* User's Own Gists */}
@@ -122,27 +148,6 @@ export default function HomePage() {
           )}
         </section>
       )}
-
-      {/* Search Other Users' Gists */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Search Public Gists by Username</h2>
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            placeholder="Enter GitHub username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            onKeyDown={handleEnter}
-            className="flex-grow border p-2 rounded-md"
-          />
-          <button
-            onClick={handleSearch}
-            className="bg-blue-600 text-white px-4 rounded-md hover:bg-blue-700"
-          >
-            Search
-          </button>
-        </div>
-      </section>
     </main>
   );
 }
