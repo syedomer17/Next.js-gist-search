@@ -10,6 +10,7 @@ declare module "next-auth" {
   interface User {
     accessToken?: string;
     username?: string;
+    login?: string; // Include this to fix your original error
   }
 
   interface JWT {

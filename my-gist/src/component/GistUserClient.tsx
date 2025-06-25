@@ -49,6 +49,7 @@ const GistUserClient = ({
         const promises = gists.map(async (gist) => {
           const fileKey = Object.keys(gist.files)[0];
           const file = gist.files[fileKey];
+
           const res = await fetch(file.raw_url);
           const text = await res.text();
 
@@ -82,13 +83,15 @@ const GistUserClient = ({
           <>
             <Image
               src={userData.avatar_url}
-              alt={userData.login}
+              alt={`${userData.login}'s avatar`}
               width={60}
               height={60}
-              className="rounded-full"
+              className="rounded-full border"
             />
             <div>
-              <h1 className="text-2xl font-bold">{userData.name ?? userData.login}</h1>
+              <h1 className="text-2xl font-bold">
+                {userData.name ?? userData.login}
+              </h1>
               <p className="text-gray-500">@{userData.login}</p>
             </div>
           </>
@@ -97,7 +100,7 @@ const GistUserClient = ({
         )}
       </div>
 
-      {/* Gist Cards with Content */}
+      {/* Gists */}
       {loading ? (
         <p className="text-gray-500">Loading gists…</p>
       ) : gistsWithContent.length > 0 ? (
@@ -117,7 +120,9 @@ const GistUserClient = ({
                 {gist.filename}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                {gist.description ?? <span className="italic">No description</span>}
+                {gist.description ?? (
+                  <span className="italic">No description</span>
+                )}
               </p>
 
               <pre className="text-sm bg-gray-100 dark:bg-neutral-800 text-gray-800 dark:text-gray-100 rounded p-3 max-h-64 overflow-auto whitespace-pre-wrap">
@@ -130,7 +135,7 @@ const GistUserClient = ({
               <Link
                 href={gist.html_url}
                 target="_blank"
-                className="text-xs text-blue-400 hover:underline mt-2 inline-block"
+                className="text-xs text-blue-500 hover:underline mt-2 inline-block"
               >
                 View on GitHub →
               </Link>
@@ -138,7 +143,9 @@ const GistUserClient = ({
           ))}
         </motion.div>
       ) : (
-        <p className="text-gray-500 italic">No public gists found for @{username}.</p>
+        <p className="text-gray-500 italic">
+          No public gists found for @{username}.
+        </p>
       )}
     </div>
   );

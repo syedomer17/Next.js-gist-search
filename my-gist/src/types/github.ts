@@ -1,5 +1,3 @@
-// src/types/github.ts
-
 export interface GitHubUser {
   login: string;
   name: string | null;
@@ -11,8 +9,9 @@ export interface GitHubGist {
   html_url: string;
   description: string | null;
   files: {
-    [key: string]: {
+    [filename: string]: {
       filename: string;
+      raw_url: string;
     };
   };
 }

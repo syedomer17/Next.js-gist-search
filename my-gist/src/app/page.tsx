@@ -16,7 +16,7 @@ interface GitHubUser {
 }
 
 const Home = () => {
-  const { user, status, accessToken } = useSessionUser();
+  const { user, status, accessToken, session } = useSessionUser();
   const router = useRouter();
 
   const [input, setInput] = useState('');
@@ -28,7 +28,7 @@ const Home = () => {
 
       try {
         const { data } = await axios.get<GitHubUser>('https://api.github.com/user', {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
         setProfile(data);
       } catch (error) {
@@ -40,7 +40,7 @@ const Home = () => {
   }, [accessToken]);
 
   if (status === 'loading') {
-    return <AnimatedLoader />
+    return <AnimatedLoader />;
   }
 
   if (!user) {
@@ -62,6 +62,14 @@ const Home = () => {
     e.preventDefault();
     if (input.trim()) {
       router.push(`/user-gists/${input.trim()}`);
+    }
+  };
+
+  const goToMyGists = () => {
+    if (session?.username) {
+      router.push(`/my-gists/${session.username}`);
+    } else {
+      alert('Username not found in session!');
     }
   };
 
@@ -113,7 +121,7 @@ const Home = () => {
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => router.push('/my-gists')}
+          onClick={goToMyGists}
           className="bg-blue-100 text-blue-700 font-medium px-6 py-3 rounded-lg border border-blue-200 hover:bg-blue-200 transition cursor-pointer"
         >
           View My Gists
