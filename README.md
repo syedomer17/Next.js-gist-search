@@ -9,10 +9,7 @@ A powerful and modern GitHub Gist search and management application built with *
 - 🔐 GitHub OAuth Authentication (via Auth.js)
 - 👤 Display logged-in user's GitHub avatar and username
 - 🔎 Search any GitHub user's public gists
-- 📁 View gist files with syntax highlighting
 - ✏️ Create, Edit, and Delete your own gists
-- ❤️ Like and ⭐ favorite gists
-- 🔄 Fork public gists
 - 🎨 Smooth UI/UX with TailwindCSS and Framer Motion
 - ⚡ Instant filtering with a responsive search bar
 - ⏳ Skeleton loaders & shimmer effects
@@ -77,7 +74,6 @@ npm run dev
 │   ├── page.tsx
 │   └── gist/[gistid]/page.tsx
 ├── components/
-│   ├── Navbar.tsx
 │   ├── GistCard.tsx
 │   └── AnimatedLoader.tsx
 ├── hooks/
