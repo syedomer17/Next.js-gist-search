@@ -11,7 +11,7 @@
 
 ### ✅ FINAL VERSION:
 
-````markdown
+
 # 🔍 GitHub Gist Explorer
 
 A powerful and modern GitHub Gist search and management application built with **Next.js 15**, **TailwindCSS**, **TypeScript**, **MongoDB**, and **Auth.js** for GitHub OAuth.
@@ -121,7 +121,7 @@ npm run dev
 ## 🧑‍💻 Author
 
 **Syed Omer Ali**
-🌐 [Portfolio](https://your-portfolio-link.com)
+🌐 [Portfolio](https://next-js-portfolio-gsb1-cs5pebze5-syedomer17s-projects.vercel.app/)
 🐱 [GitHub](https://github.com/syedomer17)
 📫 [LinkedIn](https://www.linkedin.com/in/syedomerali)
 
