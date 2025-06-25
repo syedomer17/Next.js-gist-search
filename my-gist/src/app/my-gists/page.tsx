@@ -19,7 +19,9 @@ interface Gist {
 }
 
 const GistUserPage = () => {
-  const { username } = useParams();
+  const params = useParams();
+  const username = params?.username as string;
+
   const [gists, setGists] = useState<Gist[]>([]);
   const [loading, setLoading] = useState(true);
 
