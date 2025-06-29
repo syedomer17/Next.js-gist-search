@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { useSession } from 'next-auth/react';
-import { AnimatedLoader } from '@/component/AnimatedLoader';
+import { useEffect, useState, ChangeEvent } from "react";
+import axios from "axios";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { AnimatedLoader } from "@/component/AnimatedLoader";
 
 interface Gist {
   id: string;
@@ -15,6 +15,11 @@ interface Gist {
     avatar_url: string;
     login: string;
   };
+  files: {
+    [key: string]: {
+      filename: string;
+    };
+  };
 }
 
 const GistUserPage = () => {
@@ -22,7 +27,7 @@ const GistUserPage = () => {
   const params = useParams();
 
   const usernameParam =
-    typeof params.username === 'string'
+    typeof params.username === "string"
       ? params.username
       : Array.isArray(params.username)
       ? params.username[0]
@@ -30,6 +35,17 @@ const GistUserPage = () => {
 
   const [gists, setGists] = useState<Gist[] | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce logic
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim().toLowerCase());
+    }, 300); // 300ms debounce
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   useEffect(() => {
     const fetchGists = async () => {
@@ -46,21 +62,21 @@ const GistUserPage = () => {
         const headers = isSelf
           ? {
               Authorization: `token ${session?.accessToken}`,
-              Accept: 'application/vnd.github+json',
+              Accept: "application/vnd.github+json",
             }
           : {};
 
         const { data } = await axios.get<Gist[]>(url, { headers });
         setGists(data);
       } catch (err) {
-        console.error('Failed to fetch gists:', err);
+        console.error("Failed to fetch gists:", err);
         setGists([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (status !== 'loading') {
+    if (status !== "loading") {
       fetchGists();
     }
   }, [usernameParam, session, status]);
@@ -69,6 +85,15 @@ const GistUserPage = () => {
     return <AnimatedLoader />;
   }
 
+  // Filter logic
+  const filteredGists = gists.filter((gist) => {
+    const descriptionMatch = gist.description?.toLowerCase().includes(debouncedSearch);
+    const filenameMatch = Object.keys(gist.files).some((filename) =>
+      filename.toLowerCase().includes(debouncedSearch)
+    );
+    return descriptionMatch || filenameMatch;
+  });
+
   return (
     <motion.div
       className="px-4 py-8 max-w-7xl mx-auto"
@@ -76,18 +101,33 @@ const GistUserPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-3xl font-bold text-center mb-10 text-gray-800">
+      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
         {usernameParam.charAt(0).toUpperCase() + usernameParam.slice(1)}&apos;s Gists
       </h1>
 
-      {gists.length === 0 ? (
+      {/* Search Bar */}
+      <div className="max-w-md mx-auto mb-8">
+        <input
+          type="text"
+          placeholder="Search by filename or description..."
+          value={searchTerm}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring focus:border-blue-400"
+        />
+      </div>
+
+      {filteredGists.length === 0 ? (
         <p className="text-center text-gray-500 text-lg">
-          No gists found for @{usernameParam}.
+          No gists found matching your search.
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gists.map((gist) => (
-            <Link key={gist.id} href={`/gist/${gist.id}`} className="group">
+          {filteredGists.map((gist) => (
+            <Link
+              key={gist.id}
+              href={`/user-gists/${usernameParam}/gists/${gist.id}`}
+              className="group"
+            >
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
@@ -100,9 +140,7 @@ const GistUserPage = () => {
                     className="w-10 h-10 rounded-full border object-cover"
                   />
                   <div className="truncate">
-                    <p className="font-semibold text-gray-800 truncate">
-                      {gist.owner.login}
-                    </p>
+                    <p className="font-semibold text-gray-800 truncate">{gist.owner.login}</p>
                     <p className="text-sm text-gray-400">
                       ID: {gist.id.slice(0, 8)}...
                     </p>
