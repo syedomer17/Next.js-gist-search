@@ -1,12 +1,11 @@
-// src/app/user-gists/[username]/gists/[gistid]/page.tsx
-
 import axios from "axios";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import CommentForm from "@/component/CommentForm";
 
 interface PageProps {
   params: { username: string; gistid: string };
@@ -28,6 +27,16 @@ interface GitHubGist {
   };
 }
 
+interface GistComment {
+  id: number;
+  body: string;
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+  created_at: string;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   return {
     title: `Gist ${params.gistid}`,
@@ -38,7 +47,9 @@ export default async function GistDetailPage({ params }: PageProps) {
   const { gistid } = params;
 
   let gistData: GitHubGist | null = null;
+  let comments: GistComment[] = [];
 
+  // Fetch gist details
   try {
     const { data } = await axios.get(`https://api.github.com/gists/${gistid}`);
     gistData = data;
@@ -49,6 +60,14 @@ export default async function GistDetailPage({ params }: PageProps) {
 
   if (!gistData) {
     redirect("/not-found");
+  }
+
+  // Fetch comments
+  try {
+    const { data } = await axios.get<GistComment[]>(`https://api.github.com/gists/${gistid}/comments`);
+    comments = data;
+  } catch (err) {
+    console.error("Error fetching comments:", err);
   }
 
   const fileKeys = Object.keys(gistData.files);
@@ -105,9 +124,9 @@ export default async function GistDetailPage({ params }: PageProps) {
       </p>
 
       {/* Syntax Highlighted Code */}
-      <div className="border border-gray-200 dark:border-neutral-700 rounded overflow-hidden">
+      <div className="border border-gray-200 rounded overflow-hidden">
         <SyntaxHighlighter
-          language="text" // You could also guess language or use "javascript" as default
+          language="text"
           style={oneLight}
           customStyle={{
             margin: 0,
@@ -116,11 +135,43 @@ export default async function GistDetailPage({ params }: PageProps) {
             overflow: "auto",
             fontSize: "0.9rem",
             lineHeight: "1.4",
-            background: "var(--tw-bg-neutral-100)",
           }}
         >
           {content}
         </SyntaxHighlighter>
+      </div>
+
+      {/* Comment Form */}
+      <CommentForm gistId={gistData.id} />
+
+      {/* Comments */}
+      <div className="space-y-4 mt-8">
+        <h2 className="text-xl font-semibold">Comments</h2>
+        {comments.length === 0 ? (
+          <p className="text-gray-500 italic">No comments yet.</p>
+        ) : (
+          comments.map((comment) => (
+            <div
+              key={comment.id}
+              className="border border-gray-200 rounded p-3 bg-gray-50"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Image
+                  src={comment.user.avatar_url}
+                  alt={comment.user.login}
+                  width={24}
+                  height={24}
+                  className="rounded-full"
+                />
+                <span className="font-semibold">{comment.user.login}</span>
+                <span className="text-xs text-gray-500">
+                  {new Date(comment.created_at).toLocaleString()}
+                </span>
+              </div>
+              <p className="text-sm">{comment.body}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

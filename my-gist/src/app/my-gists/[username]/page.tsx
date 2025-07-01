@@ -125,7 +125,7 @@ const GistUserPage = () => {
           {filteredGists.map((gist) => (
             <Link
               key={gist.id}
-              href={`/user-gists/${usernameParam}/gists/${gist.id}`}
+              href={`/gist/${gist.id}`} // ✅ CORRECTED LINK HERE
               className="group"
             >
               <motion.div

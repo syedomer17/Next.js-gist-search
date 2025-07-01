@@ -24,28 +24,40 @@ interface Gist {
   files: Record<string, GistFile>;
 }
 
+interface GistComment {
+  id: number;
+  body: string;
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+  created_at: string;
+}
+
 const GistDetail = ({ params }: GistDetailProps) => {
   const { accessToken } = useSessionUser();
   const [gist, setGist] = useState<Gist | null>(null);
   const [content, setContent] = useState<string | null>(null);
+  const [comments, setComments] = useState<GistComment[]>([]);
+  const [commentText, setCommentText] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
   const router = useRouter();
 
+  // Fetch Gist details
   useEffect(() => {
     const fetchGist = async () => {
       if (!accessToken) return;
-
       try {
-        const { data }: { data: Gist } = await axios.get(
+        const { data } = await axios.get<Gist>(
           `https://api.github.com/gists/${params.gistid}`,
           {
-            headers: { Authorization: `Bearer ${accessToken}` }
+            headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
-
         setGist(data);
 
-        const firstFileKey = Object.keys(data.files)[0];
-        const file = data.files[firstFileKey];
+        const fileKey = Object.keys(data.files)[0];
+        const file = data.files[fileKey];
 
         if (file.content) {
           setContent(file.content);
@@ -61,13 +73,56 @@ const GistDetail = ({ params }: GistDetailProps) => {
     fetchGist();
   }, [accessToken, params.gistid]);
 
+  // Fetch comments
+  const loadComments = async () => {
+    if (!accessToken) return;
+    try {
+      const res = await axios.get<GistComment[]>(
+        `https://api.github.com/gists/${params.gistid}/comments`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setComments(res.data);
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadComments();
+  }, [accessToken, params.gistid]);
+
+  // Handle comment post
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim() || !accessToken) return;
+
+    setCommentLoading(true);
+    try {
+      await axios.post(
+        `/api/gists/${params.gistid}/comments`,
+        { body: commentText },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      setCommentText('');
+      await loadComments(); // Reload comments after post
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
   const handleDelete = async () => {
     const confirmed = confirm('Are you sure you want to delete this gist?');
     if (!confirmed || !accessToken) return;
 
     try {
       await axios.delete(`https://api.github.com/gists/${params.gistid}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       router.push('/my-gists');
     } catch (err) {
@@ -75,11 +130,7 @@ const GistDetail = ({ params }: GistDetailProps) => {
     }
   };
 
-  if (!gist) {
-    return (
-      <AnimatedLoader />
-    );
-  }
+  if (!gist) return <AnimatedLoader />;
 
   const filename = Object.keys(gist.files)[0];
 
@@ -128,6 +179,53 @@ const GistDetail = ({ params }: GistDetailProps) => {
           >
             ✏️ Edit
           </motion.button>
+        </div>
+
+        {/* Comment Form */}
+        <form onSubmit={handlePostComment} className="space-y-2 mt-6">
+          <textarea
+            rows={3}
+            className="w-full p-2 border rounded"
+            placeholder="Write a comment..."
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+          />
+          <button
+            type="submit"
+            disabled={commentLoading}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            {commentLoading ? 'Posting...' : 'Post Comment'}
+          </button>
+        </form>
+
+        {/* Comments */}
+        <div className="space-y-4 mt-4">
+          {comments.length === 0 ? (
+            <p className="text-gray-500 italic">No comments yet.</p>
+          ) : (
+            comments.map((comment) => (
+              <div
+                key={comment.id}
+                className="bg-gray-100 p-3 rounded border border-gray-200"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <img
+                    src={comment.user.avatar_url}
+                    alt="avatar"
+                    className="w-6 h-6 rounded-full"
+                  />
+                  <span className="font-semibold text-sm">
+                    {comment.user.login}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(comment.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-gray-800">{comment.body}</p>
+              </div>
+            ))
+          )}
         </div>
       </motion.div>
     </motion.div>
