@@ -18,13 +18,11 @@ interface GistResponse {
   };
 }
 
-interface EditGistProps {
-  params: {
-    gistid: string;
-  };
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface EditGistProps { params: any }
 
 const EditGist = ({ params }: EditGistProps) => {
+  const gistId = (params as { gistid: string }).gistid;
   const { accessToken } = useSessionUser();
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
@@ -37,7 +35,7 @@ const EditGist = ({ params }: EditGistProps) => {
     const fetchGist = async () => {
       try {
         const { data }: { data: GistResponse } = await axios.get(
-          `https://api.github.com/gists/${params.gistid}`,
+          `https://api.github.com/gists/${gistId}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` }
           }
@@ -54,7 +52,7 @@ const EditGist = ({ params }: EditGistProps) => {
     };
 
     if (accessToken) fetchGist();
-  }, [accessToken, params.gistid]);
+  }, [accessToken, gistId]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -66,7 +64,7 @@ const EditGist = ({ params }: EditGistProps) => {
 
     try {
       await axios.patch(
-        `https://api.github.com/gists/${params.gistid}`,
+  `https://api.github.com/gists/${gistId}`,
         {
           description,
           files
@@ -78,7 +76,7 @@ const EditGist = ({ params }: EditGistProps) => {
           }
         }
       );
-      router.push(`/gist/${params.gistid}`);
+  router.push(`/gist/${gistId}`);
     } catch (err) {
       console.error('Error updating gist:', err);
     }

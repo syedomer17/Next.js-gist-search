@@ -7,9 +7,8 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import CommentForm from "@/component/CommentForm";
 
-interface PageProps {
-  params: { username: string; gistid: string };
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface PageProps { params: any }
 
 interface GitHubGist {
   id: string;

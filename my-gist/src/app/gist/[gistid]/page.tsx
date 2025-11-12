@@ -1,17 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useSessionUser } from '@/hooks/useSessionUser';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { AnimatedLoader } from '@/component/AnimatedLoader';
+import { useEffect, useState, useCallback } from "react";
+import axios from "axios";
+import { useSessionUser } from "@/hooks/useSessionUser";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { AnimatedLoader } from "@/component/AnimatedLoader";
+import Image from "next/image";
 
-interface GistDetailProps {
-  params: {
-    gistid: string;
-  };
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface GistDetailProps { params: any }
 
 interface GistFile {
   filename: string;
@@ -35,11 +33,12 @@ interface GistComment {
 }
 
 const GistDetail = ({ params }: GistDetailProps) => {
-  const { accessToken } = useSessionUser();
+  const gistId = (params as { gistid: string }).gistid;
+  const { accessToken, session } = useSessionUser();
   const [gist, setGist] = useState<Gist | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [comments, setComments] = useState<GistComment[]>([]);
-  const [commentText, setCommentText] = useState('');
+  const [commentText, setCommentText] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const router = useRouter();
 
@@ -49,7 +48,7 @@ const GistDetail = ({ params }: GistDetailProps) => {
       if (!accessToken) return;
       try {
         const { data } = await axios.get<Gist>(
-          `https://api.github.com/gists/${params.gistid}`,
+          `https://api.github.com/gists/${gistId}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
@@ -66,32 +65,32 @@ const GistDetail = ({ params }: GistDetailProps) => {
           setContent(res.data);
         }
       } catch (err) {
-        console.error('Failed to load gist:', err);
+        console.error("Failed to load gist:", err);
       }
     };
 
     fetchGist();
-  }, [accessToken, params.gistid]);
+  }, [accessToken, gistId]);
 
   // Fetch comments
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     if (!accessToken) return;
     try {
       const res = await axios.get<GistComment[]>(
-        `https://api.github.com/gists/${params.gistid}/comments`,
+        `https://api.github.com/gists/${gistId}/comments`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       setComments(res.data);
     } catch (err) {
-      console.error('Failed to fetch comments:', err);
+      console.error("Failed to fetch comments:", err);
     }
-  };
+  }, [accessToken, gistId]);
 
   useEffect(() => {
     loadComments();
-  }, [accessToken, params.gistid]);
+  }, [accessToken, gistId, loadComments]);
 
   // Handle comment post
   const handlePostComment = async (e: React.FormEvent) => {
@@ -101,32 +100,38 @@ const GistDetail = ({ params }: GistDetailProps) => {
     setCommentLoading(true);
     try {
       await axios.post(
-        `/api/gists/${params.gistid}/comments`,
+        `/api/gists/${gistId}/comments`,
         { body: commentText },
         {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
-      setCommentText('');
+      setCommentText("");
       await loadComments(); // Reload comments after post
     } catch (err) {
-      console.error('Failed to post comment:', err);
+      console.error("Failed to post comment:", err);
     } finally {
       setCommentLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    const confirmed = confirm('Are you sure you want to delete this gist?');
+    const confirmed = confirm("Are you sure you want to delete this gist?");
     if (!confirmed || !accessToken) return;
 
     try {
-      await axios.delete(`https://api.github.com/gists/${params.gistid}`, {
+      await axios.delete(`https://api.github.com/gists/${gistId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      router.push('/my-gists');
+      // Use session.username if available, fallback to /my-gists
+      const username = (session as { username?: string })?.username;
+      if (username) {
+        router.push(`/my-gists/${username}`);
+      } else {
+        router.push("/my-gists");
+      }
     } catch (err) {
-      console.error('Failed to delete gist:', err);
+      console.error("Failed to delete gist:", err);
     }
   };
 
@@ -149,7 +154,9 @@ const GistDetail = ({ params }: GistDetailProps) => {
       >
         <h1 className="text-3xl font-bold text-gray-800 break-words">
           {gist.description || (
-            <span className="italic text-gray-400">No description provided</span>
+            <span className="italic text-gray-400">
+              No description provided
+            </span>
           )}
         </h1>
 
@@ -158,7 +165,7 @@ const GistDetail = ({ params }: GistDetailProps) => {
         </h2>
 
         <pre className="bg-gray-100 border border-gray-300 text-sm p-4 rounded-lg overflow-x-auto whitespace-pre-wrap max-h-[500px]">
-          {content ?? 'Loading file content...'}
+          {content ?? "Loading file content..."}
         </pre>
 
         <div className="flex flex-col sm:flex-row justify-start gap-4 pt-4">
@@ -172,7 +179,7 @@ const GistDetail = ({ params }: GistDetailProps) => {
           </motion.button>
 
           <motion.button
-            onClick={() => router.push(`/gist/${params.gistid}/edit`)}
+            onClick={() => router.push(`/gist/${gistId}/edit`)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition w-full sm:w-auto cursor-pointer"
@@ -195,7 +202,7 @@ const GistDetail = ({ params }: GistDetailProps) => {
             disabled={commentLoading}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            {commentLoading ? 'Posting...' : 'Post Comment'}
+            {commentLoading ? "Posting..." : "Post Comment"}
           </button>
         </form>
 
@@ -210,10 +217,12 @@ const GistDetail = ({ params }: GistDetailProps) => {
                 className="bg-gray-100 p-3 rounded border border-gray-200"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <img
+                  <Image
                     src={comment.user.avatar_url}
                     alt="avatar"
-                    className="w-6 h-6 rounded-full"
+                    width={24} // corresponds to w-6
+                    height={24} // corresponds to h-6
+                    className="rounded-full"
                   />
                   <span className="font-semibold text-sm">
                     {comment.user.login}

@@ -66,8 +66,9 @@ const Home = () => {
   };
 
   const goToMyGists = () => {
-    if (session?.username) {
-      router.push(`/my-gists/${session.username}`);
+    const username = (session as (import('next-auth').Session & { username?: string }) | null)?.username;
+    if (username) {
+      router.push(`/my-gists/${username}`);
     } else {
       alert('Username not found in session!');
     }

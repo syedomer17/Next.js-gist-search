@@ -6,7 +6,9 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import type { Session } from "next-auth";
 import { AnimatedLoader } from "@/component/AnimatedLoader";
+import Image from "next/image";
 
 interface Gist {
   id: string;
@@ -55,14 +57,14 @@ const GistUserPage = () => {
       setLoading(true);
 
       try {
-        const isSelf = session?.username === usernameParam;
+  const isSelf = (session as (Session & { username?: string }) | null)?.username === usernameParam;
         const url = isSelf
           ? `https://api.github.com/gists`
           : `https://api.github.com/users/${usernameParam}/gists`;
 
         const headers = isSelf
           ? {
-              Authorization: `token ${session?.accessToken}`,
+              Authorization: `token ${(session as (Session & { accessToken?: string }) | null)?.accessToken}`,
               Accept: "application/vnd.github+json",
             }
           : {};
@@ -90,8 +92,12 @@ const GistUserPage = () => {
     const firstFileKey = Object.keys(gist.files)[0];
     const file = gist.files[firstFileKey];
 
-    const descriptionMatch = gist.description?.toLowerCase().includes(debouncedSearch);
-    const filenameMatch = file?.filename?.toLowerCase().includes(debouncedSearch);
+    const descriptionMatch = gist.description
+      ?.toLowerCase()
+      .includes(debouncedSearch);
+    const filenameMatch = file?.filename
+      ?.toLowerCase()
+      .includes(debouncedSearch);
 
     return descriptionMatch || filenameMatch;
   });
@@ -104,7 +110,8 @@ const GistUserPage = () => {
       transition={{ duration: 0.4 }}
     >
       <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
-        {usernameParam.charAt(0).toUpperCase() + usernameParam.slice(1)}&apos;s Gists
+        {usernameParam.charAt(0).toUpperCase() + usernameParam.slice(1)}&apos;s
+        Gists
       </h1>
 
       {/* Search Bar */}
@@ -113,7 +120,9 @@ const GistUserPage = () => {
           type="text"
           placeholder="Search by filename or description..."
           value={searchTerm}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setSearchTerm(e.target.value)
+          }
           className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring focus:border-blue-400"
         />
       </div>
@@ -140,10 +149,12 @@ const GistUserPage = () => {
                   className="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition duration-300 border border-gray-100"
                 >
                   <div className="flex items-center gap-4 mb-4">
-                    <img
+                    <Image
                       src={gist.owner.avatar_url}
                       alt={gist.owner.login}
-                      className="w-10 h-10 rounded-full border object-cover"
+                      width={40} // corresponds to w-10
+                      height={40} // corresponds to h-10
+                      className="rounded-full border object-cover"
                     />
                     <div className="truncate">
                       <p className="font-semibold text-gray-800 truncate">
@@ -157,7 +168,9 @@ const GistUserPage = () => {
 
                   <p className="text-gray-700 font-medium mb-2 truncate">
                     {gist.description || (
-                      <span className="italic text-gray-400">No description</span>
+                      <span className="italic text-gray-400">
+                        No description
+                      </span>
                     )}
                   </p>
 

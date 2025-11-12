@@ -25,7 +25,7 @@ export default function NotFound() {
           404
         </h1>
         <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-6 max-w-lg">
-          The gist you're looking for got lost in the GitHubverse.
+          The gist you&#39;re looking for got lost in the GitHubverse.
         </p>
 
         <motion.div

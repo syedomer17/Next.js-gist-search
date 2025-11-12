@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 
 interface GistComment {
   id: number;
@@ -16,15 +17,15 @@ export default function CommentSection({ gistId }: { gistId: string }) {
   const [commentText, setCommentText] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     const res = await fetch(`/api/gists/${gistId}/comments`);
     const data = await res.json();
     setComments(data);
-  };
+  }, [gistId]);
 
   useEffect(() => {
     fetchComments();
-  }, [gistId]);
+  }, [gistId, fetchComments]);
 
   const submitComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,8 +76,10 @@ export default function CommentSection({ gistId }: { gistId: string }) {
             className="bg-gray-100 p-3 rounded border border-gray-200"
           >
             <div className="flex items-center gap-2 mb-1">
-              <img
+              <Image
                 src={comment.user.avatar_url}
+                width={24}
+                height={24}
                 alt="avatar"
                 className="w-6 h-6 rounded-full"
               />

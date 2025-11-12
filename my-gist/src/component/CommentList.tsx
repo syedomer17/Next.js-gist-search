@@ -1,4 +1,6 @@
 // components/CommentList.tsx
+
+import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 
 export interface GistComment {
@@ -21,8 +23,10 @@ export default function CommentList({ comments }: { comments: GistComment[] }) {
       {comments.map((comment) => (
         <div key={comment.id} className="bg-gray-100 p-4 rounded-lg">
           <div className="flex items-center mb-2 gap-2">
-            <img
+            <Image
               src={comment.user.avatar_url}
+              width={24}
+              height={24}
               className="w-6 h-6 rounded-full"
               alt="avatar"
             />
